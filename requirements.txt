@@ -1,0 +1,7 @@
+streamlit
+yfinance
+pandas
+notion-client
+python-dotenv
+google-genai
+plotly
