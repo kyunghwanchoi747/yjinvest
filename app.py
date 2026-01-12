@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import plotly.graph_objects as go
 from dotenv import load_dotenv
-from src.stock_engine import StockProvider
+from src.stock_engine import StockProvider, resolve_ticker_with_ai
 from src.notion_handler import NotionManager
 from src.ai_analyst import generate_insight
 
@@ -17,28 +17,6 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 st.set_page_config(page_title="Stock Investment Diary", layout="wide")
 
-# Korean Stock Mapping
-TICKER_MAPPING = {
-    "SAMSUNG": "005930.KS",
-    "삼성전자": "005930.KS",
-    "HYNIX": "000660.KS",
-    "하이닉스": "000660.KS",
-    "SK하이닉스": "000660.KS",
-    "KAKAO": "035720.KS",
-    "카카오": "035720.KS",
-    "NAVER": "035420.KS",
-    "네이버": "035420.KS",
-    "HYUNDAI": "005380.KS",
-    "현대차": "005380.KS",
-    "현대자동차": "005380.KS",
-    "LGCHEM": "051910.KS",
-    "LG화학": "051910.KS"
-}
-
-def resolve_ticker(user_input):
-    """Resolve user input to ticker symbol using mapping."""
-    cleaned_input = user_input.strip().upper()
-    return TICKER_MAPPING.get(cleaned_input, cleaned_input)
 
 def main():
     """
@@ -55,21 +33,23 @@ def main():
         st.session_state.stock_data = None
     if 'ai_insight' not in st.session_state:
         st.session_state.ai_insight = None
+    if 'resolved_info' not in st.session_state:
+        st.session_state.resolved_info = None  # (ticker, company_name, original_input)
 
     # Sidebar
     with st.sidebar:
         st.header("Configuration")
         
         with st.form(key='search_form'):
-            ticker_input = st.text_input("종목명 또는 티커 (예: 삼성전자, AAPL)", value="삼성전자")
+            ticker_input = st.text_input("티커 또는 회사명을 입력하세요 (예: 테슬라, AAPL)", value="테슬라")
             submit_button = st.form_submit_button(label='분석 시작 (Fetch & Analyze)')
         
         with st.expander("ℹ️ 티커 입력 도움말"):
             st.markdown("""
-            - **한글 종목명 지원**: 삼성전자, 하이닉스, 카카오, 네이버, 현대차 등
-            - **코스피 (KOSPI)**: `005930.KS`
-            - **코스닥 (KOSDAQ)**: `035720.KQ`
-            - **미국 주식**: `AAPL`, `TSLA`, `NVDA`
+            - **AI가 자동으로 티커를 찾아줍니다!**
+            - **한글 종목명**: 테슬라, 삼성전자, 엔비디아, 애플 등
+            - **영문 티커**: `AAPL`, `TSLA`, `NVDA`
+            - **한국 주식 티커**: `005930.KS` (코스피), `035720.KQ` (코스닥)
             """)
         
         st.divider()
@@ -77,10 +57,12 @@ def main():
 
     # Form Submission Logic
     if submit_button and ticker_input:
-        target_ticker = resolve_ticker(ticker_input)
-        
+        with st.spinner('🔍 AI가 종목을 찾는 중...'):
+            target_ticker, company_name = resolve_ticker_with_ai(ticker_input, GOOGLE_API_KEY)
+            st.session_state.resolved_info = (target_ticker, company_name, ticker_input)
+
         if target_ticker != ticker_input.upper():
-            st.toast(f"🔄 '{ticker_input}' -> '{target_ticker}'로 변환되었습니다.")
+            st.toast(f"🔄 '{ticker_input}' → '{company_name} ({target_ticker})'로 변환되었습니다.")
 
         with st.spinner('데이터를 불러오는 중...'):
             data = provider.get_stock_data(target_ticker)
@@ -104,7 +86,7 @@ def main():
     if st.session_state.stock_data:
         data = st.session_state.stock_data
         info = data.get('info', {})
-        
+
         # 1. Top Metrics Layout
         # Calculate change if previous close exists
         current_price = data['current_price']
@@ -112,6 +94,13 @@ def main():
         change_value = current_price - previous_close
         change_percent = (change_value / previous_close) * 100 if previous_close else 0
         volume = info.get('volume', 0)
+
+        # 분석 중인 종목 표시 (AI 변환 정보 활용)
+        resolved_info = st.session_state.resolved_info
+        if resolved_info:
+            ticker, company_name, original_input = resolved_info
+            display_name = info.get('shortName', company_name)
+            st.info(f"📊 **분석 중인 종목: {display_name} ({data['ticker']})**")
 
         st.subheader(f"{info.get('shortName', data['ticker'])} ({data['ticker']})")
         
