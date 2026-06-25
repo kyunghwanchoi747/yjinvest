@@ -1,4 +1,4 @@
-name: Deploy to Cloudflare Pages
+name: Notify Cloudflare of Updates
 
 on:
   push:
@@ -6,31 +6,10 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  notify:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-        env:
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-          NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}
-          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
-
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Trigger Cloudflare Pages rebuild
+        run: echo "Cloudflare Pages will automatically rebuild on push"

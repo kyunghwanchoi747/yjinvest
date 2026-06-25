@@ -2,27 +2,14 @@ name = "yj-invest"
 type = "javascript"
 account_id = ""
 workers_dev = true
-main = ""
-build = { command = "npm run build" }
-usage_model = "bundled"
-
-[env.production]
-routes = [
-  { pattern = "yj-invest.pages.dev", zone_name = "pages.dev" }
-]
-vars = { ENVIRONMENT = "production" }
 
 [build]
 command = "npm run build"
 cwd = "./"
-watch_paths = ["src/**/*.ts", "app/**/*.ts", "app/**/*.tsx"]
+watch_paths = ["app/**/*.ts", "app/**/*.tsx"]
 
-[[build.upload]]
-format = "modules"
-main = "./app"
-
-[deployment]
-entrypoint = "app"
+[env.production]
+vars = { ENVIRONMENT = "production", NODE_VERSION = "20" }
 
 [observability]
 enabled = true
