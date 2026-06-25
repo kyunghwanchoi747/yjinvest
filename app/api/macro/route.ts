@@ -1,12 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Mock macro economic data - replace with actual ECOS API integration
+// Fetch real-time exchange rate from exchangerate-api.com
+const getExchangeRate = async (): Promise<number> => {
+  try {
+    const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+    if (!res.ok) throw new Error('Failed to fetch exchange rate');
+    const data = await res.json();
+    return Math.round(data.rates.KRW * 100) / 100; // KRW/USD
+  } catch (error) {
+    console.error('Exchange rate API error:', error);
+    return 1315; // Fallback value
+  }
+};
+
 const getMacroData = async () => {
+  const exchangeRate = await getExchangeRate();
+
   return {
     korea_base_rate: 3.25,
     korea_base_rate_source: '한국은행 기준금리 (2026년 기준)',
     us_base_rate: 4.5,
-    exchange_rate: 1315,
+    exchange_rate: exchangeRate,
     cpi_inflation: 2.1,
     korea_base_rate_history: {
       dates: [
