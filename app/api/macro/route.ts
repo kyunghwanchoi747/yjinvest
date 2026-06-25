@@ -4,9 +4,9 @@ import { NextRequest, NextResponse } from 'next/server';
 const getMacroData = async () => {
   return {
     korea_base_rate: 3.25,
-    korea_base_rate_source: '한국은행 기준금리 (2024년 기준)',
+    korea_base_rate_source: '한국은행 기준금리 (2026년 기준)',
     us_base_rate: 4.5,
-    exchange_rate: 1180,
+    exchange_rate: 1315,
     cpi_inflation: 2.1,
     korea_base_rate_history: {
       dates: [
