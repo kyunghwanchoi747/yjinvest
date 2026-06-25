@@ -20,6 +20,9 @@
     "url": "https://github.com/kyunghwanchoi747/yjinvest/issues"
   },
   "homepage": "https://github.com/kyunghwanchoi747/yjinvest#readme",
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@notionhq/client": "^5.22.0",
